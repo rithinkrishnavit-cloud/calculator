@@ -3,8 +3,215 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Django Calculator</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --cream: #fcf5e5;
+            --mint: #b8f2d6;
+            --sage: #e8f4e1;
+            --ink: #2b3326;
+            --ink-soft: #5c6556;
+            --edge: 2px;
+            --offset: 4px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: grid;
+            place-items: center;
+            padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+            font-family: "Lexend", system-ui, -apple-system, "Segoe UI", sans-serif;
+            color: var(--ink);
+            background-color: var(--cream);
+            /* soft wavy shapes like the reference */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 900' preserveAspectRatio='xMidYMid slice'%3E%3Cpath d='M0 150 C250 150 450 330 450 600 C450 800 330 880 250 900 L0 900 Z' fill='%23e8f4e1'/%3E%3Cpath d='M300 0 C380 120 560 170 720 330 C900 520 1000 800 1000 900 L1200 900 L1200 0 Z' fill='%23e8f4e1'/%3E%3C/svg%3E");
+            background-size: cover;
+            background-position: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Page title stays in the HTML for accessibility, hidden visually */
+        body>h2 {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+
+        /* ---------- Calculator shell ---------- */
+        .calculator {
+            width: min(100%, 360px);
+            background: var(--cream);
+            border: var(--edge) solid var(--ink);
+            border-radius: 20px;
+            box-shadow: 12px 12px 0 var(--ink);
+            overflow: hidden;
+            margin-right: 12px;
+            /* room for the offset shadow so nothing overflows */
+            margin-bottom: 12px;
+        }
+
+        /* ---------- Display ---------- */
+        .display {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            padding: clamp(20px, 6vw, 32px) clamp(18px, 6vw, 28px) clamp(18px, 5vw, 24px);
+            min-height: 150px;
+            justify-content: center;
+            text-align: right;
+        }
+
+        .display h2 {
+            order: 1;
+            /* result on top, expression underneath */
+            margin: 0;
+            max-width: 100%;
+            font-size: clamp(2.4rem, 11vw, 3.4rem);
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            overflow-wrap: anywhere;
+        }
+
+        .display p {
+            order: 2;
+            margin: 0;
+            min-height: 1.4em;
+            max-width: 100%;
+            font-size: 1.05rem;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            color: var(--ink-soft);
+            overflow-wrap: anywhere;
+        }
+
+        /* ---------- Keypad ---------- */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: clamp(10px, 3.4vw, 16px);
+            padding: clamp(14px, 4.5vw, 22px);
+            background: var(--mint);
+            border-radius: 22px 22px 0 0;
+        }
+
+        form {
+            margin: 0;
+        }
+
+        .buttons button {
+            appearance: none;
+            aspect-ratio: 1;
+            width: 100%;
+            min-height: 48px;
+            /* touch target */
+            display: grid;
+            place-items: center;
+            padding: 0;
+            font-family: inherit;
+            font-size: clamp(1.05rem, 4.6vw, 1.3rem);
+            font-weight: 700;
+            color: var(--ink);
+            background: var(--cream);
+            border: var(--edge) solid var(--ink);
+            border-radius: 14px;
+            box-shadow: var(--offset) var(--offset) 0 var(--ink);
+            cursor: pointer;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+        }
+
+        /* instant press feedback: key sinks into its shadow */
+        .buttons button:active {
+            transform: translate(var(--offset), var(--offset));
+            box-shadow: 0 0 0 var(--ink);
+        }
+
+        .buttons button:focus-visible {
+            outline: 3px solid var(--ink);
+            outline-offset: 3px;
+        }
+
+        @media (hover: hover) {
+            .buttons button:hover {
+                background: #fff;
+            }
+        }
+
+        /* AC / ( ) / delete row = control keys */
+        .buttons button[name="operation"][value="clear"],
+        .buttons button[name="operation"][value="delete"] {
+            font-size: clamp(0.95rem, 4vw, 1.15rem);
+            letter-spacing: 0.02em;
+        }
+
+        /* "=" key gets emphasis so the main action is obvious */
+        .buttons button[value="calculate"] {
+            background: var(--ink);
+            color: var(--cream);
+        }
+
+        @media (hover: hover) {
+            .buttons button[value="calculate"]:hover {
+                background: #3b4635;
+            }
+        }
+
+        .buttons button[value="calculate"]:focus-visible {
+            outline-color: var(--ink);
+        }
+
+        /* ---------- Small screens ---------- */
+        @media (max-width: 380px) {
+            .calculator {
+                box-shadow: 8px 8px 0 var(--ink);
+                margin-right: 8px;
+                margin-bottom: 8px;
+            }
+
+            :root {
+                --offset: 3px;
+            }
+        }
+
+        /* ---------- Large screens ---------- */
+        @media (min-width: 1200px) {
+            .calculator {
+                width: 380px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .buttons button {
+                transition: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
