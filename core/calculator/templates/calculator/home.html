@@ -14,18 +14,14 @@
     <div class="calculator">
 
         <div class="display">
-
             <p>{{ expression }}</p>
-
             <h2>{{ result|default:"0" }}</h2>
-
         </div>
 
         <form method="POST">
             {% csrf_token %}
 
             <input type="hidden" name="expression" value="{{ expression }}">
-
             <div class="buttons">
 
                 <button type="submit" name="operation" value="clear">AC</button>
